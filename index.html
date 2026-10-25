@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-top:#5a16a6;
+    --bg-mid:#7b23c9;
+    --bg-low:#4723c2;
+    --glow:#ff4fe0;
+    --ink:#ffffff;
+    --mono:'Space Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --sans:'Space Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --card-w:min(86vw, 360px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    background:
+      radial-gradient(70% 35% at 50% 0%, #b52fd8 0%, transparent 70%),
+      radial-gradient(90% 50% at 15% 100%, #6b2cff 0%, transparent 70%),
+      radial-gradient(60% 40% at 90% 60%, #a62ad4 0%, transparent 70%),
+      linear-gradient(180deg, var(--bg-top), var(--bg-mid) 45%, var(--bg-low));
+    background-attachment:fixed;
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  /* drifting haze */
+  .haze{position:fixed;inset:-20%;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(30% 20% at 25% 30%, rgba(255,150,255,.22), transparent 70%),
+      radial-gradient(25% 18% at 75% 70%, rgba(140,120,255,.22), transparent 70%);
+    filter:blur(20px);animation:drift 18s ease-in-out infinite alternate}
+  @keyframes drift{to{transform:translate(6%,-5%) rotate(6deg)}}
+
+  /* ---------- list ---------- */
+  .list{
+    position:fixed;inset:0;z-index:1;overflow-y:auto;
+    padding:calc(env(safe-area-inset-top,0px) + 28px) 0 calc(env(safe-area-inset-bottom,0px) + 48px);
+    display:flex;flex-direction:column;align-items:center;gap:22px;
+    transition:opacity .45s ease, filter .45s ease;
+  }
+  .list.hide{opacity:0;pointer-events:none;filter:blur(6px)}
+  .hint{font-size:15px;opacity:.75;margin-bottom:4px;letter-spacing:.01em}
+
+  /* ---------- card ---------- */
+  .card{
+    position:relative;width:var(--card-w);height:calc(var(--card-w) / 1.586);
+    border-radius:18px;overflow:hidden;flex:none;
+    cursor:pointer;
+    box-shadow:0 18px 40px rgba(25,0,70,.55), inset 0 0 0 1px rgba(255,255,255,.12);
+    transition:transform .25s ease;
+    user-select:none;
+  }
+  .list .card:active{transform:scale(.97)}
+  .card:focus-visible{outline:3px solid #fff;outline-offset:4px}
+  .card .bg{position:absolute;inset:0}
+  .card .bg svg{width:100%;height:100%;display:block}
+  .face{position:absolute;inset:0;padding:calc(var(--card-w) * 0.06) calc(var(--card-w) * 0.065)}
+  .name{position:absolute;left:calc(var(--card-w) * 0.065);top:calc(var(--card-w) * 0.06);font-weight:700;font-size:calc(var(--card-w) * 0.035);letter-spacing:.12em}
+  .bal{position:absolute;right:calc(var(--card-w) * 0.065);top:calc(var(--card-w) * 0.054);text-align:right;opacity:0;transition:opacity .4s}
+  .bal small{display:block;font-size:calc(var(--card-w) * 0.023);font-weight:600;letter-spacing:.12em;opacity:.8}
+  .bal b{display:block;font-family:var(--mono);font-size:calc(var(--card-w) * 0.046);font-weight:700;margin-top:calc(var(--card-w) * 0.006);font-variant-numeric:tabular-nums}
+  .is-active .bal{opacity:1}
+  .chiprow{position:absolute;left:calc(var(--card-w) * 0.065);top:calc(var(--card-w) * 0.24);display:flex;align-items:center;gap:calc(var(--card-w) * 0.026)}
+  .chip{width:calc(var(--card-w) * 0.11);height:calc(var(--card-w) * 0.084);border-radius:calc(var(--card-w) * 0.018);
+    background:linear-gradient(135deg,#f6dc93,#d9a94c 50%,#f1cf7a);
+    box-shadow:inset 0 0 0 calc(var(--card-w) * 0.0035) rgba(120,80,10,.25);position:relative;overflow:hidden}
+  .chip::before{content:"";position:absolute;inset:22% 0;border-top:calc(var(--card-w) * 0.0035) solid rgba(120,80,10,.35);border-bottom:calc(var(--card-w) * 0.0035) solid rgba(120,80,10,.35)}
+  .chip::after{content:"";position:absolute;inset:0 38%;border-left:calc(var(--card-w) * 0.0035) solid rgba(120,80,10,.35);border-right:calc(var(--card-w) * 0.0035) solid rgba(120,80,10,.35)}
+  .nfc{width:calc(var(--card-w) * 0.05);height:calc(var(--card-w) * 0.05);opacity:.85}
+  .num{position:absolute;left:calc(var(--card-w) * 0.065);top:calc(var(--card-w) * 0.41);font-family:var(--sans);font-weight:600;font-size:calc(var(--card-w) * 0.054);letter-spacing:.09em;white-space:nowrap}
+  .foot{position:absolute;left:calc(var(--card-w) * 0.065);right:calc(var(--card-w) * 0.065);bottom:calc(var(--card-w) * 0.054);display:flex;align-items:flex-end;gap:calc(var(--card-w) * 0.07)}
+  .foot small{display:block;font-size:calc(var(--card-w) * 0.022);font-weight:600;letter-spacing:.1em;opacity:.7;margin-bottom:calc(var(--card-w) * 0.008)}
+  .foot b{display:block;font-size:calc(var(--card-w) * 0.031);font-weight:700;letter-spacing:.06em}
+  .net{margin-left:auto;font-size:calc(var(--card-w) * 0.04);font-weight:700;letter-spacing:.02em;opacity:.95}
+
+  /* Pearl — iridescent silver */
+  .c-pearl{color:#57516a}
+  .c-pearl .bg{background:
+    radial-gradient(60% 80% at 20% 10%, rgba(255,255,255,.9), transparent 60%),
+    conic-gradient(from 210deg at 72% 40%, #efe9fb, #dde5f8, #f7e2f0, #e1f2ee, #e9e1fa, #efe9fb)}
+  .c-pearl .chip{filter:grayscale(1) brightness(1.15)}
+  /* Nebula — deep navy & violet */
+  .c-nebula{color:#fff}
+  .c-nebula .bg{background:
+    radial-gradient(55% 75% at 78% 30%, rgba(111,92,255,.55), transparent 65%),
+    radial-gradient(70% 70% at 0% 100%, rgba(40,90,255,.45), transparent 65%),
+    linear-gradient(160deg,#141c5c,#0a113e 60%,#11154a)}
+  .c-nebula .chip{filter:grayscale(1) brightness(1.3)}
+  /* Prism — low-poly purple */
+  .c-prism{color:#fff}
+  /* Jade — topographic green */
+  .c-jade{color:#fff}
+  .c-jade .bg{background:linear-gradient(140deg,#30b489,#1b8768 55%,#0f6a52)}
+  /* Bloom — halftone pink */
+  .c-bloom{color:#fff}
+  .c-bloom .bg{background:
+    radial-gradient(70% 90% at 0% 0%, rgba(255,190,120,.55), transparent 60%),
+    linear-gradient(150deg,#ff5aa3,#e02c79 50%,#9b1666)}
+  .c-bloom .num,.c-bloom .name{text-shadow:0 1px 0 rgba(120,0,60,.35)}
+  /* ---------- top-up stage ---------- */
+  .stage{position:fixed;inset:0;z-index:2;pointer-events:none}
+  .stage.on{pointer-events:auto}
+  .active{position:absolute;left:0;top:0;will-change:transform;
+    transition:transform .85s cubic-bezier(.2,.8,.2,1)}
+  .active .card{cursor:default}
+  .active .card.hit{animation:hit .35s ease}
+  @keyframes hit{
+    0%{box-shadow:0 18px 40px rgba(25,0,70,.55),0 0 0 0 rgba(255,79,224,0)}
+    40%{box-shadow:0 18px 40px rgba(25,0,70,.55),0 0 38px 8px rgba(255,79,224,.75)}
+    100%{box-shadow:0 18px 40px rgba(25,0,70,.55),0 0 0 0 rgba(255,79,224,0)}}
+  .active.final .card{box-shadow:0 26px 60px rgba(25,0,70,.6),0 0 60px 6px rgba(255,79,224,.45)}
+
+  .orbs{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);height:0;opacity:0;transition:opacity .6s}
+  .stage.on .orbs{opacity:1}
+  .stage.done .orbs{opacity:0}
+  .orb{position:absolute;width:46px;height:20px;border-radius:50%;transform:translate(-50%,-50%);
+    background:radial-gradient(closest-side,#ffd0fb,#ff4fe0 45%,rgba(255,79,224,0));
+    filter:blur(2px);animation:pulse 1.4s ease-in-out infinite}
+  .orb:nth-child(2){animation-delay:.4s}.orb:nth-child(3){animation-delay:.8s}
+  @keyframes pulse{50%{transform:translate(-50%,-50%) scale(1.35);opacity:.7}}
+
+  /* flying numbers — bigger and glowing */
+  .fly{position:absolute;left:0;top:0;white-space:nowrap;
+    font-family:var(--mono);font-weight:700;font-size:clamp(34px, 10vw, 46px);line-height:1;
+    color:#fff;letter-spacing:.01em;
+    text-shadow:0 0 10px rgba(255,79,224,.95),0 0 26px rgba(170,90,255,.8),0 2px 0 rgba(60,0,90,.6);
+    will-change:transform,opacity}
+  .fly::before,.fly::after{content:attr(data-t);position:absolute;left:0;top:0}
+  .fly::before{transform:translate(-3px,7px);color:rgba(255,255,255,.32);text-shadow:none}
+  .fly::after{color:#6ff2ff;opacity:.45;mix-blend-mode:screen;text-shadow:none;animation:jit .16s steps(2) infinite}
+  @keyframes jit{0%{transform:translate(2px,-1px)}50%{transform:translate(-2px,1px)}100%{transform:translate(1px,0)}}
+  .dot{position:absolute;left:0;top:0;width:5px;height:5px;border-radius:50%;
+    background:#ffd6fb;box-shadow:0 0 8px 2px rgba(255,79,224,.8);
+    animation:dot .9s ease-out forwards}
+  @keyframes dot{to{opacity:0}}
+
+  .again{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 36px);
+    width:68px;height:68px;border-radius:50%;border:0;padding:0;
+    display:grid;place-items:center;color:#3b0d6e;background:#fff;
+    transform:translate(-50%,20px) scale(.6);opacity:0;pointer-events:none;cursor:pointer;
+    box-shadow:0 10px 30px rgba(40,0,90,.45),0 0 0 8px rgba(255,255,255,.12);
+    transition:opacity .35s, transform .45s cubic-bezier(.3,1.6,.5,1)}
+  .again svg{width:34px;height:34px}
+  .again .tick{stroke-dasharray:24;stroke-dashoffset:24}
+  .again.show{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
+  .again.show .tick{transition:stroke-dashoffset .45s .25s ease-out;stroke-dashoffset:0}
+  .again:active{transform:translate(-50%,0) scale(.92)}
+  .again:focus-visible{outline:3px solid #ffd27a;outline-offset:3px}
+
+  canvas#confetti{position:fixed;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
+
+  @media (prefers-reduced-motion: reduce){
+    .haze,.orb,.fly::after{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="haze" aria-hidden="true"></div>
+
+<main class="list" id="list">
+  <p class="hint">Tap a card to top up</p>
+<div class="card c-pearl" tabindex="0" role="button" aria-label="Top up card PEARL">
+    <div class="bg"><svg viewBox="0 0 340 214" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><g fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.1">
+    <path d="M-10 60 C 90 20, 200 105, 350 42"></path><path d="M-10 71 C 90 31, 200 116, 350 53"></path><path d="M-10 82 C 90 42, 200 127, 350 64"></path><path d="M-10 93 C 90 53, 200 138, 350 75"></path><path d="M-10 104 C 90 64, 200 149, 350 86"></path><path d="M-10 115 C 90 75, 200 160, 350 97"></path><path d="M-10 126 C 90 86, 200 171, 350 108"></path><path d="M-10 137 C 90 97, 200 182, 350 119"></path><path d="M-10 148 C 90 108, 200 193, 350 130"></path><path d="M-10 159 C 90 119, 200 204, 350 141"></path><path d="M-10 170 C 90 130, 200 215, 350 152"></path><path d="M-10 181 C 90 141, 200 226, 350 163"></path>
+  </g><g fill="none" stroke="rgba(160,140,210,.22)" stroke-width="1">
+    <path d="M-10 63 C 90 23, 200 108, 350 45"></path><path d="M-10 74 C 90 34, 200 119, 350 56"></path><path d="M-10 85 C 90 45, 200 130, 350 67"></path><path d="M-10 96 C 90 56, 200 141, 350 78"></path><path d="M-10 107 C 90 67, 200 152, 350 89"></path><path d="M-10 118 C 90 78, 200 163, 350 100"></path><path d="M-10 129 C 90 89, 200 174, 350 111"></path><path d="M-10 140 C 90 100, 200 185, 350 122"></path><path d="M-10 151 C 90 111, 200 196, 350 133"></path><path d="M-10 162 C 90 122, 200 207, 350 144"></path><path d="M-10 173 C 90 133, 200 218, 350 155"></path><path d="M-10 184 C 90 144, 200 229, 350 166"></path>
+  </g></svg></div>
+    <div class="face">
+      <span class="name">PEARL</span>
+      <div class="bal"><small>BALANCE</small><b>0.00</b></div>
+      <div class="chiprow"><div class="chip"></div><svg class="nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 8.5a5 5 0 0 1 0 7"></path><path d="M12 6a8.5 8.5 0 0 1 0 12"></path><path d="M16 3.5a12 12 0 0 1 0 17"></path></svg></div>
+      <div class="num">5416 2907 1128 8651</div>
+      <div class="foot">
+        <div><small>CARD HOLDER</small><b>ULRIC CODROW</b></div>
+        <div><small>VALID THRU</small><b>04/29</b></div>
+        <span class="net">credit</span>
+      </div>
+    </div></div><div class="card c-nebula" tabindex="0" role="button" aria-label="Top up card NEBULA">
+    <div class="bg"><svg viewBox="0 0 340 214" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><defs>
+      <radialGradient id="nb-p" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#c9d4ff"></stop><stop offset=".45" stop-color="#7a6bff"></stop><stop offset="1" stop-color="#2a1f8a"></stop></radialGradient>
+      <filter id="nb-g"><feGaussianBlur stdDeviation="6"></feGaussianBlur></filter>
+      <clipPath id="nb-front"><rect x="0" y="78" width="340" height="140"></rect></clipPath>
+    </defs><circle cx="4.0" cy="13.3" r="1.32" fill="#fff" opacity="0.69"></circle><circle cx="177.3" cy="86.8" r="0.76" fill="#fff" opacity="0.37"></circle><circle cx="188.1" cy="156.2" r="0.53" fill="#fff" opacity="0.31"></circle><circle cx="259.8" cy="110.9" r="0.47" fill="#fff" opacity="0.46"></circle><circle cx="99.7" cy="114.4" r="0.58" fill="#fff" opacity="0.88"></circle><circle cx="84.2" cy="187.8" r="0.46" fill="#fff" opacity="0.30"></circle><circle cx="52.6" cy="62.3" r="0.85" fill="#fff" opacity="0.73"></circle><circle cx="25.3" cy="195.4" r="0.86" fill="#fff" opacity="0.64"></circle><circle cx="231.2" cy="206.7" r="0.94" fill="#fff" opacity="0.84"></circle><circle cx="281.4" cy="8.6" r="0.44" fill="#fff" opacity="0.45"></circle><circle cx="144.6" cy="4.3" r="0.35" fill="#fff" opacity="0.74"></circle><circle cx="125.4" cy="91.3" r="0.77" fill="#fff" opacity="0.86"></circle><circle cx="239.1" cy="147.3" r="0.61" fill="#fff" opacity="0.45"></circle><circle cx="47.2" cy="28.5" r="1.25" fill="#fff" opacity="0.43"></circle><circle cx="64.7" cy="135.3" r="0.62" fill="#fff" opacity="0.23"></circle><circle cx="232.6" cy="197.2" r="0.85" fill="#fff" opacity="0.78"></circle><circle cx="222.8" cy="196.9" r="0.38" fill="#fff" opacity="0.57"></circle><circle cx="220.7" cy="190.7" r="1.31" fill="#fff" opacity="0.79"></circle><circle cx="202.0" cy="206.3" r="1.31" fill="#fff" opacity="0.58"></circle><circle cx="278.3" cy="1.2" r="0.82" fill="#fff" opacity="0.43"></circle><circle cx="246.3" cy="117.6" r="1.08" fill="#fff" opacity="0.88"></circle><circle cx="189.6" cy="176.2" r="0.72" fill="#fff" opacity="0.65"></circle><circle cx="251.1" cy="118.1" r="0.59" fill="#fff" opacity="0.37"></circle><circle cx="3.2" cy="5.2" r="1.29" fill="#fff" opacity="0.78"></circle><circle cx="214.4" cy="3.1" r="0.93" fill="#fff" opacity="0.62"></circle><circle cx="243.7" cy="212.9" r="0.56" fill="#fff" opacity="0.89"></circle><circle cx="221.0" cy="172.3" r="0.94" fill="#fff" opacity="0.78"></circle><circle cx="47.3" cy="212.8" r="0.81" fill="#fff" opacity="0.60"></circle><circle cx="54.7" cy="84.8" r="0.48" fill="#fff" opacity="0.77"></circle><circle cx="292.9" cy="157.5" r="0.97" fill="#fff" opacity="0.89"></circle><circle cx="207.2" cy="157.6" r="1.30" fill="#fff" opacity="0.54"></circle><circle cx="78.1" cy="125.0" r="1.13" fill="#fff" opacity="0.80"></circle><circle cx="64.6" cy="118.7" r="0.78" fill="#fff" opacity="0.57"></circle><circle cx="61.3" cy="53.6" r="0.73" fill="#fff" opacity="0.53"></circle><circle cx="58.1" cy="0.7" r="0.44" fill="#fff" opacity="0.22"></circle><circle cx="36.5" cy="187.5" r="1.33" fill="#fff" opacity="0.24"></circle><circle cx="59.3" cy="86.7" r="0.80" fill="#fff" opacity="0.71"></circle><circle cx="125.2" cy="77.0" r="1.12" fill="#fff" opacity="0.70"></circle><circle cx="272.0" cy="113.4" r="1.13" fill="#fff" opacity="0.49"></circle><circle cx="191.3" cy="62.6" r="0.83" fill="#fff" opacity="0.74"></circle><circle cx="27.2" cy="54.0" r="1.16" fill="#fff" opacity="0.78"></circle><circle cx="263.4" cy="92.0" r="0.64" fill="#fff" opacity="0.84"></circle><circle cx="85.5" cy="77.3" r="0.77" fill="#fff" opacity="0.78"></circle><circle cx="137.4" cy="208.6" r="0.86" fill="#fff" opacity="0.51"></circle><circle cx="115.1" cy="114.9" r="0.57" fill="#fff" opacity="0.82"></circle><circle cx="194.6" cy="211.0" r="1.18" fill="#fff" opacity="0.55"></circle><circle cx="148.5" cy="149.3" r="1.27" fill="#fff" opacity="0.59"></circle><circle cx="223.5" cy="34.8" r="1.01" fill="#fff" opacity="0.47"></circle><circle cx="207.3" cy="183.2" r="0.67" fill="#fff" opacity="0.41"></circle><circle cx="30.8" cy="146.3" r="1.06" fill="#fff" opacity="0.88"></circle><circle cx="107.9" cy="55.6" r="0.32" fill="#fff" opacity="0.70"></circle><circle cx="314.9" cy="167.8" r="1.16" fill="#fff" opacity="0.87"></circle><circle cx="77.0" cy="209.5" r="0.56" fill="#fff" opacity="0.58"></circle><circle cx="133.0" cy="152.7" r="1.09" fill="#fff" opacity="0.64"></circle><circle cx="246.7" cy="133.0" r="0.90" fill="#fff" opacity="0.39"></circle><circle cx="282.9" cy="103.3" r="0.40" fill="#fff" opacity="0.71"></circle><circle cx="157.7" cy="119.7" r="0.86" fill="#fff" opacity="0.82"></circle><circle cx="324.0" cy="32.8" r="0.36" fill="#fff" opacity="0.40"></circle><circle cx="178.1" cy="84.0" r="1.25" fill="#fff" opacity="0.80"></circle><circle cx="180.2" cy="194.3" r="0.56" fill="#fff" opacity="0.55"></circle><circle cx="314.8" cy="144.6" r="1.13" fill="#fff" opacity="0.43"></circle><circle cx="309.3" cy="207.5" r="1.18" fill="#fff" opacity="0.20"></circle><circle cx="56.9" cy="161.1" r="0.36" fill="#fff" opacity="0.26"></circle><circle cx="310.0" cy="58.1" r="0.90" fill="#fff" opacity="0.38"></circle><circle cx="269.9" cy="154.0" r="0.31" fill="#fff" opacity="0.51"></circle><circle cx="333.0" cy="17.6" r="0.34" fill="#fff" opacity="0.47"></circle><circle cx="268.3" cy="147.9" r="0.55" fill="#fff" opacity="0.55"></circle><circle cx="36.2" cy="103.3" r="0.73" fill="#fff" opacity="0.58"></circle><circle cx="57.1" cy="165.3" r="0.58" fill="#fff" opacity="0.68"></circle><circle cx="283.0" cy="7.9" r="0.45" fill="#fff" opacity="0.70"></circle>
+    <circle cx="262" cy="78" r="40" fill="#7a6bff" opacity=".55" filter="url(#nb-g)"></circle>
+    <ellipse cx="262" cy="78" rx="66" ry="14" fill="none" stroke="rgba(200,190,255,.55)" stroke-width="3" transform="rotate(-18 262 78)"></ellipse>
+    <circle cx="262" cy="78" r="34" fill="url(#nb-p)"></circle>
+    <g clip-path="url(#nb-front)"><ellipse cx="262" cy="78" rx="66" ry="14" fill="none" stroke="rgba(220,215,255,.85)" stroke-width="3" transform="rotate(-18 262 78)"></ellipse></g></svg></div>
+    <div class="face">
+      <span class="name">NEBULA</span>
+      <div class="bal"><small>BALANCE</small><b>0.00</b></div>
+      <div class="chiprow"><div class="chip"></div><svg class="nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 8.5a5 5 0 0 1 0 7"></path><path d="M12 6a8.5 8.5 0 0 1 0 12"></path><path d="M16 3.5a12 12 0 0 1 0 17"></path></svg></div>
+      <div class="num">5348 1431 6711 3018</div>
+      <div class="foot">
+        <div><small>CARD HOLDER</small><b>WYNN VASHOW</b></div>
+        <div><small>VALID THRU</small><b>04/28</b></div>
+        <span class="net">debit</span>
+      </div>
+    </div></div><div class="card c-prism" tabindex="0" role="button" aria-label="Top up card PRISM">
+    <div class="bg"><svg viewBox="0 0 340 214" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><polygon points="0.0,0.0 40.5,0.0 0.0,38.8" fill="rgb(95,34,177)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="40.5,0.0 40.8,50.0 0.0,38.8" fill="rgb(78,27,154)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="40.5,0.0 83.4,0.0 75.7,38.6" fill="rgb(94,33,174)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="40.5,0.0 75.7,38.6 40.8,50.0" fill="rgb(80,28,157)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="83.4,0.0 121.0,0.0 75.7,38.6" fill="rgb(104,37,188)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="121.0,0.0 130.9,38.6 75.7,38.6" fill="rgb(99,35,181)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="121.0,0.0 166.5,0.0 157.9,53.6" fill="rgb(98,35,181)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="121.0,0.0 157.9,53.6 130.9,38.6" fill="rgb(108,38,193)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="166.5,0.0 211.8,0.0 157.9,53.6" fill="rgb(143,48,216)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="211.8,0.0 203.7,44.2 157.9,53.6" fill="rgb(112,39,199)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="211.8,0.0 266.8,0.0 264.7,31.1" fill="rgb(144,48,216)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="211.8,0.0 264.7,31.1 203.7,44.2" fill="rgb(150,49,216)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="266.8,0.0 308.6,0.0 264.7,31.1" fill="rgb(156,51,217)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="308.6,0.0 297.2,35.8 264.7,31.1" fill="rgb(140,47,215)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="308.6,0.0 340.0,0.0 340.0,44.1" fill="rgb(214,64,224)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="308.6,0.0 340.0,44.1 297.2,35.8" fill="rgb(209,63,223)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="0.0,38.8 40.8,50.0 30.4,90.0" fill="rgb(79,28,156)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="0.0,38.8 30.4,90.0 0.0,84.7" fill="rgb(85,30,162)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="40.8,50.0 75.7,38.6 30.4,90.0" fill="rgb(81,28,158)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="75.7,38.6 94.1,96.0 30.4,90.0" fill="rgb(68,24,141)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="75.7,38.6 130.9,38.6 132.0,87.9" fill="rgb(101,36,184)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="75.7,38.6 132.0,87.9 94.1,96.0" fill="rgb(73,26,148)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="130.9,38.6 157.9,53.6 132.0,87.9" fill="rgb(105,37,189)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="157.9,53.6 160.5,81.2 132.0,87.9" fill="rgb(84,29,161)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="157.9,53.6 203.7,44.2 209.0,80.7" fill="rgb(116,41,203)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="157.9,53.6 209.0,80.7 160.5,81.2" fill="rgb(108,38,193)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="203.7,44.2 264.7,31.1 209.0,80.7" fill="rgb(111,39,197)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="264.7,31.1 259.1,83.7 209.0,80.7" fill="rgb(119,42,207)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="264.7,31.1 297.2,35.8 294.2,96.7" fill="rgb(172,54,219)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="264.7,31.1 294.2,96.7 259.1,83.7" fill="rgb(114,40,202)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="297.2,35.8 340.0,44.1 294.2,96.7" fill="rgb(160,52,218)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="340.0,44.1 340.0,87.7 294.2,96.7" fill="rgb(142,48,216)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="0.0,84.7 30.4,90.0 0.0,135.0" fill="rgb(62,22,133)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="30.4,90.0 36.9,137.9 0.0,135.0" fill="rgb(65,23,137)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="30.4,90.0 94.1,96.0 97.6,136.1" fill="rgb(87,31,166)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="30.4,90.0 97.6,136.1 36.9,137.9" fill="rgb(53,18,121)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="94.1,96.0 132.0,87.9 97.6,136.1" fill="rgb(89,31,168)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="132.0,87.9 131.7,118.7 97.6,136.1" fill="rgb(79,28,156)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="132.0,87.9 160.5,81.2 169.1,117.0" fill="rgb(101,35,183)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="132.0,87.9 169.1,117.0 131.7,118.7" fill="rgb(92,32,172)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="160.5,81.2 209.0,80.7 169.1,117.0" fill="rgb(108,38,193)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="209.0,80.7 200.5,134.2 169.1,117.0" fill="rgb(99,35,182)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="209.0,80.7 259.1,83.7 251.8,135.8" fill="rgb(113,40,200)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="209.0,80.7 251.8,135.8 200.5,134.2" fill="rgb(111,39,197)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="259.1,83.7 294.2,96.7 251.8,135.8" fill="rgb(112,39,199)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="294.2,96.7 290.9,121.0 251.8,135.8" fill="rgb(122,43,212)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="294.2,96.7 340.0,87.7 340.0,132.5" fill="rgb(121,43,210)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="294.2,96.7 340.0,132.5 290.9,121.0" fill="rgb(105,37,189)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="0.0,135.0 36.9,137.9 28.6,158.8" fill="rgb(46,16,112)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="0.0,135.0 28.6,158.8 0.0,180.1" fill="rgb(42,14,106)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="36.9,137.9 97.6,136.1 28.6,158.8" fill="rgb(66,23,138)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="97.6,136.1 73.6,163.7 28.6,158.8" fill="rgb(49,17,116)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="97.6,136.1 131.7,118.7 130.6,177.7" fill="rgb(81,29,158)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="97.6,136.1 130.6,177.7 73.6,163.7" fill="rgb(64,22,136)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="131.7,118.7 169.1,117.0 130.6,177.7" fill="rgb(95,33,176)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="169.1,117.0 163.2,183.4 130.6,177.7" fill="rgb(71,25,145)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="169.1,117.0 200.5,134.2 203.9,181.6" fill="rgb(92,32,172)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="169.1,117.0 203.9,181.6 163.2,183.4" fill="rgb(79,28,156)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="200.5,134.2 251.8,135.8 203.9,181.6" fill="rgb(80,28,157)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="251.8,135.8 269.1,164.8 203.9,181.6" fill="rgb(89,31,168)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="251.8,135.8 290.9,121.0 289.9,158.5" fill="rgb(108,38,194)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="251.8,135.8 289.9,158.5 269.1,164.8" fill="rgb(93,33,173)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="290.9,121.0 340.0,132.5 289.9,158.5" fill="rgb(110,39,196)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="340.0,132.5 340.0,160.4 289.9,158.5" fill="rgb(99,35,182)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="0.0,180.1 28.6,158.8 0.0,214.0" fill="rgb(34,12,96)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="28.6,158.8 50.3,214.0 0.0,214.0" fill="rgb(54,19,123)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="28.6,158.8 73.6,163.7 94.6,214.0" fill="rgb(69,24,143)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="28.6,158.8 94.6,214.0 50.3,214.0" fill="rgb(53,18,121)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="73.6,163.7 130.6,177.7 94.6,214.0" fill="rgb(72,25,146)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="130.6,177.7 134.2,214.0 94.6,214.0" fill="rgb(58,20,128)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="130.6,177.7 163.2,183.4 167.3,214.0" fill="rgb(70,24,143)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="130.6,177.7 167.3,214.0 134.2,214.0" fill="rgb(59,20,128)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="163.2,183.4 203.9,181.6 167.3,214.0" fill="rgb(70,25,144)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="203.9,181.6 207.0,214.0 167.3,214.0" fill="rgb(63,22,134)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="203.9,181.6 269.1,164.8 246.7,214.0" fill="rgb(81,28,157)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="203.9,181.6 246.7,214.0 207.0,214.0" fill="rgb(84,29,161)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="269.1,164.8 289.9,158.5 246.7,214.0" fill="rgb(94,33,175)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="289.9,158.5 296.6,214.0 246.7,214.0" fill="rgb(95,33,177)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="289.9,158.5 340.0,160.4 340.0,214.0" fill="rgb(92,32,172)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><polygon points="289.9,158.5 340.0,214.0 296.6,214.0" fill="rgb(108,38,193)" stroke="rgba(255,255,255,.08)" stroke-width=".6"></polygon><rect width="340" height="214" fill="url(#pr-v)"></rect><defs><linearGradient id="pr-v" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#1a0850" stop-opacity="0"></stop><stop offset="1" stop-color="#1a0850" stop-opacity=".55"></stop></linearGradient></defs></svg></div>
+    <div class="face">
+      <span class="name">PRISM</span>
+      <div class="bal"><small>BALANCE</small><b>0.00</b></div>
+      <div class="chiprow"><div class="chip"></div><svg class="nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 8.5a5 5 0 0 1 0 7"></path><path d="M12 6a8.5 8.5 0 0 1 0 12"></path><path d="M16 3.5a12 12 0 0 1 0 17"></path></svg></div>
+      <div class="num">5426 1052 4293 1525</div>
+      <div class="foot">
+        <div><small>CARD HOLDER</small><b>LIVENA KETTEK</b></div>
+        <div><small>VALID THRU</small><b>04/32</b></div>
+        <span class="net">debit</span>
+      </div>
+    </div></div><div class="card c-jade" tabindex="0" role="button" aria-label="Top up card JADE">
+    <div class="bg"><svg viewBox="0 0 340 214" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><g fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1"><path d="M274.6 150.0L274.2 151.3L273.7 152.6L273.3 153.9L272.9 155.2L272.7 156.6L272.5 158.1L272.1 159.6L271.4 161.0L270.4 162.3L269.1 163.4L267.7 164.5L266.2 165.6L264.8 166.8L263.2 168.1L261.5 169.3L259.5 170.4L257.3 170.8L255.0 170.5L252.9 169.3L251.2 167.4L249.9 165.2L249.1 163.0L248.4 161.3L247.6 160.2L246.4 159.8L244.6 159.9L242.3 160.2L239.8 160.2L237.3 159.9L235.3 159.1L233.9 157.9L233.1 156.4L232.7 154.8L232.5 153.2L232.3 151.6L232.1 150.0L231.9 148.4L231.9 146.7L232.2 145.1L233.0 143.6L234.2 142.2L235.7 141.1L237.3 140.1L238.8 139.1L240.3 138.2L241.8 137.4L243.3 136.6L245.0 136.1L246.8 136.0L248.7 136.1L250.5 136.5L252.1 136.9L253.6 136.9L255.0 136.5L256.6 135.4L258.5 134.0L260.9 132.4L263.6 131.1L266.4 130.5L268.9 130.8L270.8 132.0L271.9 133.9L272.4 136.1L272.3 138.4L272.1 140.4L272.1 142.1L272.4 143.5L273.0 144.8L273.7 146.0L274.3 147.3L274.7 148.6L274.6 150.0Z" opacity="0.6"></path><path d="M295.1 150.0L294.0 152.7L292.6 155.3L291.2 157.8L290.2 160.2L289.6 162.9L289.1 165.7L288.4 168.7L287.3 171.7L285.6 174.5L283.3 177.0L280.8 179.4L278.0 181.8L275.0 184.3L271.8 186.9L268.1 189.2L264.0 190.9L259.5 191.5L255.0 190.5L250.9 187.9L247.5 184.0L245.1 179.6L243.4 175.5L242.0 172.3L240.2 170.5L237.5 170.0L233.7 170.3L228.9 170.9L223.7 171.0L218.9 170.2L215.2 168.4L212.7 165.8L211.5 162.7L211.1 159.4L211.0 156.2L210.7 153.1L210.1 150.0L209.3 146.8L208.9 143.5L209.1 140.2L210.3 137.0L212.5 134.2L215.5 131.7L218.8 129.7L222.2 128.0L225.5 126.4L228.7 124.9L232.0 123.7L235.5 122.9L239.1 122.7L242.7 123.0L246.1 123.5L249.3 124.0L252.1 123.7L255.0 122.5L258.3 120.1L262.3 117.1L267.1 113.9L272.5 111.6L277.9 110.6L282.7 111.6L286.3 114.3L288.3 118.2L289.0 122.8L288.8 127.3L288.6 131.2L288.8 134.4L289.8 137.0L291.4 139.4L293.2 141.8L294.7 144.4L295.3 147.2L295.1 150.0Z" opacity="0.6"></path><path d="M316.1 150.0L313.9 154.1L311.1 157.9L308.5 161.5L306.5 165.0L305.4 168.8L304.8 173.0L304.2 177.5L303.0 182.2L300.9 186.8L298.0 191.0L294.4 195.0L290.2 198.8L285.7 202.6L280.6 206.2L274.9 209.4L268.5 211.4L261.7 211.7L255.0 209.8L248.9 205.6L244.0 199.8L240.5 193.4L237.9 187.6L235.6 183.3L232.6 181.0L228.2 180.7L222.1 181.4L214.7 182.2L207.0 182.2L200.1 180.7L195.0 177.7L191.9 173.5L190.7 168.7L190.6 163.8L190.5 159.1L190.0 154.6L188.6 150.0L186.9 145.2L185.5 140.2L185.3 135.1L186.7 130.1L189.8 125.7L194.4 122.0L199.7 119.0L205.3 116.6L210.8 114.6L216.1 112.9L221.3 111.4L226.5 110.5L231.8 110.2L237.0 110.4L241.9 110.9L246.4 111.0L250.6 110.1L255.0 107.8L260.0 104.0L266.2 99.4L273.5 94.9L281.5 91.7L289.5 90.8L296.3 92.7L301.3 97.1L304.0 103.3L304.9 110.1L304.7 116.6L304.6 122.2L305.4 126.7L307.5 130.4L310.5 133.8L313.7 137.4L316.1 141.4L317.0 145.7L316.1 150.0Z" opacity="0.6"></path><path d="M337.5 150.0L333.6 155.5L329.0 160.4L324.7 164.9L321.8 169.4L320.3 174.4L319.9 180.0L319.6 186.2L318.8 192.8L316.7 199.4L313.3 205.6L308.6 211.3L303.0 216.6L296.7 221.5L289.5 225.9L281.6 229.5L273.0 231.5L263.9 231.2L255.0 228.2L247.1 222.5L240.7 214.9L236.0 206.8L232.4 199.6L229.0 194.6L224.5 192.2L218.2 192.1L209.7 193.2L199.8 194.1L189.8 193.7L181.2 191.3L175.1 186.9L171.8 181.0L170.9 174.5L171.1 168.0L171.1 161.8L169.9 156.0L167.5 150.0L164.3 143.7L161.6 136.8L160.5 129.7L162.0 122.9L166.2 116.9L172.6 112.0L180.4 108.2L188.6 105.4L196.5 103.2L204.0 101.4L211.1 99.9L218.0 98.8L224.8 98.2L231.4 98.1L237.6 98.1L243.4 97.6L249.1 95.7L255.0 92.2L261.9 87.0L270.2 81.0L280.0 75.4L290.6 71.8L300.8 71.3L309.5 74.4L315.7 80.7L319.0 89.0L320.0 98.0L320.1 106.3L320.5 113.3L322.3 118.9L325.9 123.5L330.6 128.0L335.3 132.8L338.5 138.2L339.3 144.1L337.5 150.0Z" opacity="1"></path><path d="M358.6 150.0L352.7 156.8L345.9 162.8L339.9 168.2L336.0 173.6L334.4 179.6L334.5 186.7L335.2 194.9L335.0 203.7L333.2 212.5L329.3 220.8L323.6 228.3L316.3 235.0L307.9 240.8L298.5 245.7L288.3 249.3L277.2 250.9L265.9 249.8L255.0 245.6L245.3 238.5L237.5 229.5L231.5 220.0L226.8 212.0L222.1 206.5L216.0 204.1L207.5 204.2L196.7 205.6L184.5 206.4L172.5 205.4L162.5 201.8L155.8 195.8L152.7 188.2L152.2 179.9L152.7 171.9L152.4 164.5L150.3 157.3L146.1 150.0L141.0 142.0L136.6 133.3L134.6 124.2L136.3 115.4L141.8 107.8L150.5 101.7L161.1 97.4L172.2 94.4L182.9 92.3L192.7 90.6L201.7 89.1L210.1 87.7L218.1 86.7L225.8 85.9L233.3 85.1L240.3 83.5L247.4 80.5L255.0 75.6L263.8 69.2L274.4 62.0L286.5 55.8L299.5 52.2L311.9 52.4L322.2 56.9L329.4 65.0L333.3 75.3L334.7 86.2L335.3 96.1L336.6 104.3L339.9 110.8L345.3 116.3L351.9 121.8L357.9 127.9L361.7 135.0L361.9 142.5L358.6 150.0Z" opacity="0.6"></path><path d="M379.2 150.0L370.8 158.1L361.6 165.0L353.9 171.2L349.3 177.4L348.0 184.7L349.1 193.5L351.1 203.8L351.9 215.1L350.5 226.4L346.1 236.9L339.1 246.1L329.9 253.8L319.2 260.2L307.4 265.1L294.7 268.4L281.3 269.4L267.8 267.5L255.0 262.2L243.6 254.0L234.3 243.8L227.0 233.5L220.9 224.8L214.7 219.2L206.7 216.9L196.2 217.2L183.2 218.5L168.8 218.9L155.2 217.0L144.3 212.0L137.5 204.3L134.6 194.9L134.6 185.1L135.1 175.7L134.2 167.0L130.5 158.7L124.2 150.0L116.8 140.3L110.5 129.6L107.6 118.4L109.6 107.7L116.9 98.5L128.3 91.5L142.2 86.8L156.6 83.9L170.1 82.1L182.2 80.6L192.8 79.0L202.4 77.1L211.4 75.3L220.2 73.4L228.7 71.4L237.0 68.5L245.6 64.2L255.0 58.2L265.9 50.7L278.6 42.9L293.0 36.5L308.2 33.1L322.4 34.3L334.2 40.2L342.5 50.1L347.1 62.2L349.1 74.7L350.6 85.9L353.2 95.0L358.3 102.3L365.8 108.7L374.2 115.3L381.4 122.9L385.3 131.6L384.6 140.9L379.2 150.0Z" opacity="0.6"></path><path d="M398.9 150.0L387.7 159.3L376.0 167.1L366.8 174.0L361.8 181.1L361.4 189.7L364.1 200.4L367.7 213.1L369.8 227.0L368.7 240.9L363.7 253.6L355.1 264.3L343.7 272.9L330.4 279.4L316.0 284.0L300.8 286.7L285.2 286.9L269.7 284.1L255.0 278.1L242.0 269.1L231.1 258.3L222.3 247.5L214.7 238.6L206.7 232.8L196.9 230.5L184.3 230.8L169.3 231.7L153.2 231.4L138.4 228.3L127.0 221.7L120.2 212.3L117.8 201.2L118.0 189.9L118.2 179.3L116.1 169.6L110.3 160.1L101.4 150.0L91.3 138.5L83.0 125.7L79.4 112.4L82.3 99.7L91.8 89.1L106.4 81.4L124.0 76.6L141.9 74.1L158.3 72.6L172.5 71.3L184.4 69.4L194.9 66.8L204.7 63.7L214.2 60.4L223.8 56.8L233.5 52.5L243.7 47.0L255.0 40.1L267.9 32.0L282.8 23.9L299.3 17.6L316.5 14.9L332.5 17.1L345.6 24.4L355.0 35.8L360.5 49.4L363.6 63.1L366.3 75.3L370.7 85.2L377.8 93.3L387.4 100.6L397.5 108.5L405.6 117.7L409.1 128.3L406.7 139.4L398.9 150.0Z" opacity="0.6"></path><path d="M417.3 150.0L403.1 160.4L389.2 168.9L378.8 176.5L374.1 184.7L375.0 194.8L379.7 207.6L385.3 223.0L388.7 239.7L387.8 256.2L381.9 271.0L371.4 282.9L357.4 291.9L341.3 298.1L324.2 302.0L306.5 303.8L288.8 303.3L271.4 299.9L255.0 293.4L240.3 284.2L227.8 273.2L217.4 262.3L208.0 253.3L198.2 247.4L186.5 245.0L172.0 244.8L155.3 245.1L137.9 243.6L122.3 239.0L110.7 230.8L104.1 219.7L102.0 207.1L102.1 194.5L101.5 182.9L97.6 172.2L89.3 161.6L77.3 150.0L64.4 136.7L54.3 121.7L50.4 106.1L54.6 91.6L66.9 79.8L85.3 71.6L106.8 67.0L128.2 64.9L147.4 63.9L163.3 62.6L176.3 60.1L187.4 56.3L197.6 51.6L207.9 46.4L218.5 41.1L229.7 35.4L241.8 29.0L255.0 21.4L270.0 13.2L286.9 5.3L305.4 -0.4L324.3 -2.3L341.9 0.9L356.5 9.4L367.0 22.0L373.8 36.7L378.4 51.3L382.8 64.2L389.2 74.8L398.6 83.7L410.1 92.1L421.6 101.5L430.0 112.5L432.5 125.0L428.0 137.9L417.3 150.0Z" opacity="1"></path><path d="M434.2 150.0L417.2 161.4L401.2 170.6L390.3 179.0L386.4 188.3L389.3 200.1L396.4 215.3L404.1 233.5L408.7 253.2L407.8 272.2L400.5 288.7L387.7 301.6L370.8 310.5L351.8 316.0L331.9 319.0L311.9 319.9L292.2 318.7L273.1 315.1L255.0 308.7L238.6 299.6L224.4 288.9L212.1 278.2L200.8 269.1L189.1 263.0L175.6 260.0L159.6 259.0L141.5 258.2L123.3 255.4L107.3 249.1L95.7 239.2L89.3 226.5L87.1 212.6L86.7 199.0L84.7 186.5L78.4 174.9L66.9 163.2L51.7 150.0L36.1 134.7L24.6 117.5L20.8 99.8L27.0 83.6L42.6 70.8L65.1 62.3L90.7 58.0L115.7 56.5L137.3 55.8L154.7 54.3L168.3 50.9L179.6 45.5L190.1 38.7L201.1 31.4L212.9 24.3L225.8 17.3L239.7 10.2L255.0 2.7L272.0 -5.2L290.8 -12.4L311.1 -17.4L331.6 -18.4L350.8 -14.3L366.9 -5.0L379.0 8.4L387.4 23.8L393.8 39.0L400.3 52.4L409.0 63.7L420.5 73.5L433.8 83.3L446.1 94.4L454.1 107.3L455.1 121.8L448.0 136.5L434.2 150.0Z" opacity="0.6"></path><path d="M449.5 150.0L429.9 162.2L412.6 172.2L401.7 181.4L399.3 192.0L404.5 205.8L414.3 223.6L424.1 244.8L429.8 267.3L428.4 288.7L419.3 306.7L403.7 319.9L383.7 328.3L361.6 332.9L339.0 334.7L316.9 334.8L295.4 333.3L274.7 329.9L255.0 324.2L236.9 315.9L220.7 305.8L206.3 295.3L193.1 286.1L179.6 279.4L164.5 275.4L147.2 273.2L128.3 270.8L109.6 266.3L93.5 258.4L81.9 247.0L75.4 232.9L72.8 218.0L71.2 203.5L67.1 190.3L57.9 177.8L43.0 164.8L24.5 150.0L6.6 132.6L-6.0 113.2L-8.8 93.4L-0.1 75.7L19.4 62.1L46.3 53.6L76.0 49.7L104.2 48.8L127.9 48.3L146.1 46.2L159.9 41.4L171.2 33.9L182.0 24.7L193.7 15.2L206.9 6.4L221.6 -1.5L237.6 -8.8L255.0 -15.8L273.9 -22.8L294.5 -29.1L316.3 -33.1L338.4 -33.4L359.2 -28.7L377.0 -19.0L391.0 -5.3L401.5 10.3L410.1 25.9L419.0 39.9L430.0 52.0L443.5 62.9L458.0 74.3L470.6 87.2L477.6 102.3L476.4 118.8L466.4 135.2L449.5 150.0Z" opacity="0.6"></path><path d="M463.4 150.0L441.7 163.1L423.6 173.8L413.4 184.0L413.1 196.0L421.2 212.0L433.8 232.6L445.5 256.7L451.7 282.0L449.3 305.5L438.0 324.4L419.2 337.6L395.9 345.2L370.7 348.5L345.7 349.3L321.6 348.8L298.5 347.4L276.3 344.9L255.0 340.3L235.0 333.1L216.7 323.9L200.2 313.7L184.9 304.1L169.7 296.4L153.3 290.9L135.2 286.9L115.9 282.6L97.0 276.4L80.9 266.9L69.3 254.0L62.4 239.0L58.8 223.2L55.3 208.2L48.4 194.3L35.9 180.9L17.5 166.6L-4.1 150.0L-24.0 130.5L-36.8 108.8L-38.2 87.2L-26.2 68.1L-2.5 53.9L28.9 45.6L62.6 42.2L93.6 41.6L118.8 41.0L137.5 37.9L151.1 31.3L162.1 21.3L173.1 9.6L185.8 -2.2L200.6 -12.5L217.3 -20.9L235.6 -27.7L255.0 -33.7L275.7 -39.4L297.9 -44.4L321.2 -47.6L344.8 -47.4L367.3 -42.6L387.1 -33.0L403.3 -19.5L416.4 -3.9L427.6 11.9L439.0 26.5L452.2 39.5L467.3 52.0L482.5 65.1L494.6 80.2L500.0 97.5L496.3 116.0L483.2 134.0L463.4 150.0Z" opacity="0.6"></path></g></svg></div>
+    <div class="face">
+      <span class="name">JADE</span>
+      <div class="bal"><small>BALANCE</small><b>0.00</b></div>
+      <div class="chiprow"><div class="chip"></div><svg class="nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 8.5a5 5 0 0 1 0 7"></path><path d="M12 6a8.5 8.5 0 0 1 0 12"></path><path d="M16 3.5a12 12 0 0 1 0 17"></path></svg></div>
+      <div class="num">4750 3864 0143 3074</div>
+      <div class="foot">
+        <div><small>CARD HOLDER</small><b>NEVE WRENKO</b></div>
+        <div><small>VALID THRU</small><b>06/32</b></div>
+        <span class="net">credit</span>
+      </div>
+    </div></div><div class="card c-bloom" tabindex="0" role="button" aria-label="Top up card BLOOM">
+    <div class="bg"><svg viewBox="0 0 340 214" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><g fill="rgba(255,255,255,.28)"><circle cx="255.5" cy="8" r="0.36"></circle><circle cx="266.5" cy="8" r="0.43"></circle><circle cx="277.5" cy="8" r="0.49"></circle><circle cx="288.5" cy="8" r="0.54"></circle><circle cx="299.5" cy="8" r="0.58"></circle><circle cx="310.5" cy="8" r="0.61"></circle><circle cx="321.5" cy="8" r="0.63"></circle><circle cx="332.5" cy="8" r="0.65"></circle><circle cx="343.5" cy="8" r="0.65"></circle><circle cx="228.0" cy="19" r="0.32"></circle><circle cx="239.0" cy="19" r="0.41"></circle><circle cx="250.0" cy="19" r="0.50"></circle><circle cx="261.0" cy="19" r="0.57"></circle><circle cx="272.0" cy="19" r="0.64"></circle><circle cx="283.0" cy="19" r="0.70"></circle><circle cx="294.0" cy="19" r="0.75"></circle><circle cx="305.0" cy="19" r="0.78"></circle><circle cx="316.0" cy="19" r="0.81"></circle><circle cx="327.0" cy="19" r="0.83"></circle><circle cx="338.0" cy="19" r="0.84"></circle><circle cx="211.5" cy="30" r="0.33"></circle><circle cx="222.5" cy="30" r="0.44"></circle><circle cx="233.5" cy="30" r="0.53"></circle><circle cx="244.5" cy="30" r="0.63"></circle><circle cx="255.5" cy="30" r="0.71"></circle><circle cx="266.5" cy="30" r="0.78"></circle><circle cx="277.5" cy="30" r="0.85"></circle><circle cx="288.5" cy="30" r="0.91"></circle><circle cx="299.5" cy="30" r="0.95"></circle><circle cx="310.5" cy="30" r="0.99"></circle><circle cx="321.5" cy="30" r="1.01"></circle><circle cx="332.5" cy="30" r="1.02"></circle><circle cx="343.5" cy="30" r="1.03"></circle><circle cx="195.0" cy="41" r="0.31"></circle><circle cx="206.0" cy="41" r="0.43"></circle><circle cx="217.0" cy="41" r="0.54"></circle><circle cx="228.0" cy="41" r="0.65"></circle><circle cx="239.0" cy="41" r="0.75"></circle><circle cx="250.0" cy="41" r="0.84"></circle><circle cx="261.0" cy="41" r="0.92"></circle><circle cx="272.0" cy="41" r="1.00"></circle><circle cx="283.0" cy="41" r="1.06"></circle><circle cx="294.0" cy="41" r="1.11"></circle><circle cx="305.0" cy="41" r="1.16"></circle><circle cx="316.0" cy="41" r="1.19"></circle><circle cx="327.0" cy="41" r="1.21"></circle><circle cx="338.0" cy="41" r="1.22"></circle><circle cx="189.5" cy="52" r="0.39"></circle><circle cx="200.5" cy="52" r="0.51"></circle><circle cx="211.5" cy="52" r="0.63"></circle><circle cx="222.5" cy="52" r="0.75"></circle><circle cx="233.5" cy="52" r="0.86"></circle><circle cx="244.5" cy="52" r="0.96"></circle><circle cx="255.5" cy="52" r="1.05"></circle><circle cx="266.5" cy="52" r="1.13"></circle><circle cx="277.5" cy="52" r="1.21"></circle><circle cx="288.5" cy="52" r="1.27"></circle><circle cx="299.5" cy="52" r="1.32"></circle><circle cx="310.5" cy="52" r="1.36"></circle><circle cx="321.5" cy="52" r="1.39"></circle><circle cx="332.5" cy="52" r="1.40"></circle><circle cx="343.5" cy="52" r="1.41"></circle><circle cx="173.0" cy="63" r="0.32"></circle><circle cx="184.0" cy="63" r="0.46"></circle><circle cx="195.0" cy="63" r="0.59"></circle><circle cx="206.0" cy="63" r="0.72"></circle><circle cx="217.0" cy="63" r="0.84"></circle><circle cx="228.0" cy="63" r="0.96"></circle><circle cx="239.0" cy="63" r="1.07"></circle><circle cx="250.0" cy="63" r="1.17"></circle><circle cx="261.0" cy="63" r="1.26"></circle><circle cx="272.0" cy="63" r="1.34"></circle><circle cx="283.0" cy="63" r="1.42"></circle><circle cx="294.0" cy="63" r="1.48"></circle><circle cx="305.0" cy="63" r="1.53"></circle><circle cx="316.0" cy="63" r="1.56"></circle><circle cx="327.0" cy="63" r="1.59"></circle><circle cx="338.0" cy="63" r="1.60"></circle><circle cx="167.5" cy="74" r="0.37"></circle><circle cx="178.5" cy="74" r="0.51"></circle><circle cx="189.5" cy="74" r="0.66"></circle><circle cx="200.5" cy="74" r="0.79"></circle><circle cx="211.5" cy="74" r="0.92"></circle><circle cx="222.5" cy="74" r="1.05"></circle><circle cx="233.5" cy="74" r="1.17"></circle><circle cx="244.5" cy="74" r="1.28"></circle><circle cx="255.5" cy="74" r="1.38"></circle><circle cx="266.5" cy="74" r="1.47"></circle><circle cx="277.5" cy="74" r="1.56"></circle><circle cx="288.5" cy="74" r="1.63"></circle><circle cx="299.5" cy="74" r="1.69"></circle><circle cx="310.5" cy="74" r="1.73"></circle><circle cx="321.5" cy="74" r="1.77"></circle><circle cx="332.5" cy="74" r="1.78"></circle><circle cx="343.5" cy="74" r="1.79"></circle><circle cx="162.0" cy="85" r="0.41"></circle><circle cx="173.0" cy="85" r="0.56"></circle><circle cx="184.0" cy="85" r="0.71"></circle><circle cx="195.0" cy="85" r="0.85"></circle><circle cx="206.0" cy="85" r="0.99"></circle><circle cx="217.0" cy="85" r="1.13"></circle><circle cx="228.0" cy="85" r="1.25"></circle><circle cx="239.0" cy="85" r="1.38"></circle><circle cx="250.0" cy="85" r="1.49"></circle><circle cx="261.0" cy="85" r="1.59"></circle><circle cx="272.0" cy="85" r="1.69"></circle><circle cx="283.0" cy="85" r="1.77"></circle><circle cx="294.0" cy="85" r="1.84"></circle><circle cx="305.0" cy="85" r="1.90"></circle><circle cx="316.0" cy="85" r="1.94"></circle><circle cx="327.0" cy="85" r="1.96"></circle><circle cx="338.0" cy="85" r="1.98"></circle><circle cx="156.5" cy="96" r="0.44"></circle><circle cx="167.5" cy="96" r="0.60"></circle><circle cx="178.5" cy="96" r="0.75"></circle><circle cx="189.5" cy="96" r="0.90"></circle><circle cx="200.5" cy="96" r="1.05"></circle><circle cx="211.5" cy="96" r="1.19"></circle><circle cx="222.5" cy="96" r="1.33"></circle><circle cx="233.5" cy="96" r="1.46"></circle><circle cx="244.5" cy="96" r="1.58"></circle><circle cx="255.5" cy="96" r="1.70"></circle><circle cx="266.5" cy="96" r="1.80"></circle><circle cx="277.5" cy="96" r="1.90"></circle><circle cx="288.5" cy="96" r="1.98"></circle><circle cx="299.5" cy="96" r="2.05"></circle><circle cx="310.5" cy="96" r="2.10"></circle><circle cx="321.5" cy="96" r="2.14"></circle><circle cx="332.5" cy="96" r="2.16"></circle><circle cx="343.5" cy="96" r="2.16"></circle><circle cx="151.0" cy="107" r="0.46"></circle><circle cx="162.0" cy="107" r="0.62"></circle><circle cx="173.0" cy="107" r="0.78"></circle><circle cx="184.0" cy="107" r="0.94"></circle><circle cx="195.0" cy="107" r="1.09"></circle><circle cx="206.0" cy="107" r="1.24"></circle><circle cx="217.0" cy="107" r="1.39"></circle><circle cx="228.0" cy="107" r="1.53"></circle><circle cx="239.0" cy="107" r="1.66"></circle><circle cx="250.0" cy="107" r="1.79"></circle><circle cx="261.0" cy="107" r="1.91"></circle><circle cx="272.0" cy="107" r="2.01"></circle><circle cx="283.0" cy="107" r="2.11"></circle><circle cx="294.0" cy="107" r="2.19"></circle><circle cx="305.0" cy="107" r="2.26"></circle><circle cx="316.0" cy="107" r="2.31"></circle><circle cx="327.0" cy="107" r="2.34"></circle><circle cx="338.0" cy="107" r="2.35"></circle><circle cx="145.5" cy="118" r="0.46"></circle><circle cx="156.5" cy="118" r="0.63"></circle><circle cx="167.5" cy="118" r="0.80"></circle><circle cx="178.5" cy="118" r="0.96"></circle><circle cx="189.5" cy="118" r="1.12"></circle><circle cx="200.5" cy="118" r="1.28"></circle><circle cx="211.5" cy="118" r="1.43"></circle><circle cx="222.5" cy="118" r="1.58"></circle><circle cx="233.5" cy="118" r="1.73"></circle><circle cx="244.5" cy="118" r="1.87"></circle><circle cx="255.5" cy="118" r="1.99"></circle><circle cx="266.5" cy="118" r="2.12"></circle><circle cx="277.5" cy="118" r="2.22"></circle><circle cx="288.5" cy="118" r="2.32"></circle><circle cx="299.5" cy="118" r="2.40"></circle><circle cx="310.5" cy="118" r="2.47"></circle><circle cx="321.5" cy="118" r="2.51"></circle><circle cx="332.5" cy="118" r="2.54"></circle><circle cx="343.5" cy="118" r="2.54"></circle><circle cx="140.0" cy="129" r="0.45"></circle><circle cx="151.0" cy="129" r="0.63"></circle><circle cx="162.0" cy="129" r="0.80"></circle><circle cx="173.0" cy="129" r="0.97"></circle><circle cx="184.0" cy="129" r="1.14"></circle><circle cx="195.0" cy="129" r="1.30"></circle><circle cx="206.0" cy="129" r="1.46"></circle><circle cx="217.0" cy="129" r="1.62"></circle><circle cx="228.0" cy="129" r="1.78"></circle><circle cx="239.0" cy="129" r="1.92"></circle><circle cx="250.0" cy="129" r="2.07"></circle><circle cx="261.0" cy="129" r="2.20"></circle><circle cx="272.0" cy="129" r="2.32"></circle><circle cx="283.0" cy="129" r="2.44"></circle><circle cx="294.0" cy="129" r="2.53"></circle><circle cx="305.0" cy="129" r="2.62"></circle><circle cx="316.0" cy="129" r="2.68"></circle><circle cx="327.0" cy="129" r="2.72"></circle><circle cx="338.0" cy="129" r="2.73"></circle><circle cx="134.5" cy="140" r="0.43"></circle><circle cx="145.5" cy="140" r="0.61"></circle><circle cx="156.5" cy="140" r="0.79"></circle><circle cx="167.5" cy="140" r="0.96"></circle><circle cx="178.5" cy="140" r="1.14"></circle><circle cx="189.5" cy="140" r="1.31"></circle><circle cx="200.5" cy="140" r="1.48"></circle><circle cx="211.5" cy="140" r="1.64"></circle><circle cx="222.5" cy="140" r="1.81"></circle><circle cx="233.5" cy="140" r="1.96"></circle><circle cx="244.5" cy="140" r="2.12"></circle><circle cx="255.5" cy="140" r="2.26"></circle><circle cx="266.5" cy="140" r="2.40"></circle><circle cx="277.5" cy="140" r="2.53"></circle><circle cx="288.5" cy="140" r="2.65"></circle><circle cx="299.5" cy="140" r="2.75"></circle><circle cx="310.5" cy="140" r="2.83"></circle><circle cx="321.5" cy="140" r="2.88"></circle><circle cx="332.5" cy="140" r="2.92"></circle><circle cx="343.5" cy="140" r="2.92"></circle><circle cx="129.0" cy="151" r="0.40"></circle><circle cx="140.0" cy="151" r="0.58"></circle><circle cx="151.0" cy="151" r="0.77"></circle><circle cx="162.0" cy="151" r="0.94"></circle><circle cx="173.0" cy="151" r="1.12"></circle><circle cx="184.0" cy="151" r="1.30"></circle><circle cx="195.0" cy="151" r="1.47"></circle><circle cx="206.0" cy="151" r="1.65"></circle><circle cx="217.0" cy="151" r="1.82"></circle><circle cx="228.0" cy="151" r="1.98"></circle><circle cx="239.0" cy="151" r="2.15"></circle><circle cx="250.0" cy="151" r="2.31"></circle><circle cx="261.0" cy="151" r="2.46"></circle><circle cx="272.0" cy="151" r="2.60"></circle><circle cx="283.0" cy="151" r="2.74"></circle><circle cx="294.0" cy="151" r="2.86"></circle><circle cx="305.0" cy="151" r="2.96"></circle><circle cx="316.0" cy="151" r="3.04"></circle><circle cx="327.0" cy="151" r="3.09"></circle><circle cx="338.0" cy="151" r="3.11"></circle><circle cx="123.5" cy="162" r="0.36"></circle><circle cx="134.5" cy="162" r="0.55"></circle><circle cx="145.5" cy="162" r="0.73"></circle><circle cx="156.5" cy="162" r="0.91"></circle><circle cx="167.5" cy="162" r="1.09"></circle><circle cx="178.5" cy="162" r="1.27"></circle><circle cx="189.5" cy="162" r="1.45"></circle><circle cx="200.5" cy="162" r="1.63"></circle><circle cx="211.5" cy="162" r="1.81"></circle><circle cx="222.5" cy="162" r="1.98"></circle><circle cx="233.5" cy="162" r="2.16"></circle><circle cx="244.5" cy="162" r="2.33"></circle><circle cx="255.5" cy="162" r="2.49"></circle><circle cx="266.5" cy="162" r="2.65"></circle><circle cx="277.5" cy="162" r="2.80"></circle><circle cx="288.5" cy="162" r="2.94"></circle><circle cx="299.5" cy="162" r="3.06"></circle><circle cx="310.5" cy="162" r="3.17"></circle><circle cx="321.5" cy="162" r="3.25"></circle><circle cx="332.5" cy="162" r="3.29"></circle><circle cx="343.5" cy="162" r="3.30"></circle><circle cx="118.0" cy="173" r="0.31"></circle><circle cx="129.0" cy="173" r="0.49"></circle><circle cx="140.0" cy="173" r="0.68"></circle><circle cx="151.0" cy="173" r="0.87"></circle><circle cx="162.0" cy="173" r="1.05"></circle><circle cx="173.0" cy="173" r="1.24"></circle><circle cx="184.0" cy="173" r="1.42"></circle><circle cx="195.0" cy="173" r="1.60"></circle><circle cx="206.0" cy="173" r="1.78"></circle><circle cx="217.0" cy="173" r="1.96"></circle><circle cx="228.0" cy="173" r="2.14"></circle><circle cx="239.0" cy="173" r="2.32"></circle><circle cx="250.0" cy="173" r="2.49"></circle><circle cx="261.0" cy="173" r="2.67"></circle><circle cx="272.0" cy="173" r="2.83"></circle><circle cx="283.0" cy="173" r="2.99"></circle><circle cx="294.0" cy="173" r="3.14"></circle><circle cx="305.0" cy="173" r="3.27"></circle><circle cx="316.0" cy="173" r="3.38"></circle><circle cx="327.0" cy="173" r="3.46"></circle><circle cx="338.0" cy="173" r="3.49"></circle><circle cx="123.5" cy="184" r="0.43"></circle><circle cx="134.5" cy="184" r="0.62"></circle><circle cx="145.5" cy="184" r="0.81"></circle><circle cx="156.5" cy="184" r="0.99"></circle><circle cx="167.5" cy="184" r="1.18"></circle><circle cx="178.5" cy="184" r="1.37"></circle><circle cx="189.5" cy="184" r="1.55"></circle><circle cx="200.5" cy="184" r="1.74"></circle><circle cx="211.5" cy="184" r="1.92"></circle><circle cx="222.5" cy="184" r="2.11"></circle><circle cx="233.5" cy="184" r="2.29"></circle><circle cx="244.5" cy="184" r="2.47"></circle><circle cx="255.5" cy="184" r="2.65"></circle><circle cx="266.5" cy="184" r="2.83"></circle><circle cx="277.5" cy="184" r="3.00"></circle><circle cx="288.5" cy="184" r="3.17"></circle><circle cx="299.5" cy="184" r="3.33"></circle><circle cx="310.5" cy="184" r="3.47"></circle><circle cx="321.5" cy="184" r="3.59"></circle><circle cx="332.5" cy="184" r="3.67"></circle><circle cx="343.5" cy="184" r="3.68"></circle><circle cx="118.0" cy="195" r="0.36"></circle><circle cx="129.0" cy="195" r="0.55"></circle><circle cx="140.0" cy="195" r="0.74"></circle><circle cx="151.0" cy="195" r="0.92"></circle><circle cx="162.0" cy="195" r="1.11"></circle><circle cx="173.0" cy="195" r="1.30"></circle><circle cx="184.0" cy="195" r="1.49"></circle><circle cx="195.0" cy="195" r="1.68"></circle><circle cx="206.0" cy="195" r="1.87"></circle><circle cx="217.0" cy="195" r="2.05"></circle><circle cx="228.0" cy="195" r="2.24"></circle><circle cx="239.0" cy="195" r="2.43"></circle><circle cx="250.0" cy="195" r="2.61"></circle><circle cx="261.0" cy="195" r="2.80"></circle><circle cx="272.0" cy="195" r="2.98"></circle><circle cx="283.0" cy="195" r="3.16"></circle><circle cx="294.0" cy="195" r="3.34"></circle><circle cx="305.0" cy="195" r="3.51"></circle><circle cx="316.0" cy="195" r="3.67"></circle><circle cx="327.0" cy="195" r="3.80"></circle><circle cx="338.0" cy="195" r="3.87"></circle><circle cx="123.5" cy="206" r="0.46"></circle><circle cx="134.5" cy="206" r="0.65"></circle><circle cx="145.5" cy="206" r="0.84"></circle><circle cx="156.5" cy="206" r="1.03"></circle><circle cx="167.5" cy="206" r="1.22"></circle><circle cx="178.5" cy="206" r="1.41"></circle><circle cx="189.5" cy="206" r="1.60"></circle><circle cx="200.5" cy="206" r="1.79"></circle><circle cx="211.5" cy="206" r="1.98"></circle><circle cx="222.5" cy="206" r="2.17"></circle><circle cx="233.5" cy="206" r="2.36"></circle><circle cx="244.5" cy="206" r="2.55"></circle><circle cx="255.5" cy="206" r="2.74"></circle><circle cx="266.5" cy="206" r="2.93"></circle><circle cx="277.5" cy="206" r="3.11"></circle><circle cx="288.5" cy="206" r="3.30"></circle><circle cx="299.5" cy="206" r="3.49"></circle><circle cx="310.5" cy="206" r="3.67"></circle><circle cx="321.5" cy="206" r="3.85"></circle><circle cx="332.5" cy="206" r="4.01"></circle><circle cx="343.5" cy="206" r="4.05"></circle></g></svg></div>
+    <div class="face">
+      <span class="name">BLOOM</span>
+      <div class="bal"><small>BALANCE</small><b>0.00</b></div>
+      <div class="chiprow"><div class="chip"></div><svg class="nfc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 8.5a5 5 0 0 1 0 7"></path><path d="M12 6a8.5 8.5 0 0 1 0 12"></path><path d="M16 3.5a12 12 0 0 1 0 17"></path></svg></div>
+      <div class="num">4921 7730 5512 0846</div>
+      <div class="foot">
+        <div><small>CARD HOLDER</small><b>MIRA OSTEVAL</b></div>
+        <div><small>VALID THRU</small><b>11/30</b></div>
+        <span class="net">debit</span>
+      </div>
+    </div></div></main>
+
+<section class="stage" id="stage" aria-live="polite">
+  <div class="orbs" id="orbs"><span class="orb" style="left:22%"></span><span class="orb" style="left:50%"></span><span class="orb" style="left:80%"></span></div>
+  <button class="again" id="again" type="button" aria-label="Done, back to cards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+</section>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+(() => {
+  const list = document.getElementById('list');
+  const stage = document.getElementById('stage');
+  const again = document.getElementById('again');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  list.querySelectorAll('.card').forEach(el => {
+    el.addEventListener('click', () => start(el));
+    el.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); start(el); } });
+  });
+
+  const fmt = v => v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const rand = (a,b) => a + Math.random()*(b-a);
+
+  let running = false, wrap = null, runId = 0;
+
+  function setPos(el, x, y, s=1){ el.style.transform = `translate(${x}px,${y}px) scale(${s})`; }
+
+  async function start(srcCard){
+    if (running) return;
+    running = true;
+    const id = ++runId;
+    const r = srcCard.getBoundingClientRect();
+
+    wrap = document.createElement('div');
+    wrap.className = 'active';
+    const card = srcCard.cloneNode(true);
+    card.classList.add('is-active');
+    card.removeAttribute('tabindex'); card.removeAttribute('role');
+    wrap.appendChild(card);
+    wrap.style.transition = 'none';
+    setPos(wrap, r.left, r.top);
+    stage.insertBefore(wrap, stage.firstChild);
+    stage.classList.add('on'); stage.classList.remove('done');
+    list.classList.add('hide');
+
+    const W = innerWidth, H = innerHeight;
+    const cw = r.width, ch = r.height;
+    const safeTop = parseFloat(getComputedStyle(document.body).paddingTop) || 0;
+    const topX = (W - cw)/2, topY = safeTop + 22;
+
+    await wait(30);
+    wrap.style.transition = '';
+    setPos(wrap, topX, topY);
+    await wait(reduce ? 200 : 900);
+
+    // flying numbers
+    const balEl = card.querySelector('.bal b');
+    let balance = 0, shown = 0, tweenRaf = 0;
+    const tweenTo = target => {
+      cancelAnimationFrame(tweenRaf);
+      const from = shown, t0 = performance.now(), dur = 520;
+      const step = now => {
+        const k = Math.min(1,(now-t0)/dur), e = 1-Math.pow(1-k,3);
+        shown = from + (target-from)*e;
+        balEl.textContent = fmt(shown);
+        if (k<1) tweenRaf = requestAnimationFrame(step);
+      };
+      tweenRaf = requestAnimationFrame(step);
+    };
+
+    const orbXs = [.22,.5,.8].map(f => f*W);
+    const startY = H - (parseFloat(getComputedStyle(document.body).paddingBottom)||0) - 50;
+    const targetY = topY + ch*0.5;
+    const COUNT = 12;
+    const flights = [];
+
+    for (let i=0;i<COUNT;i++){
+      if (id !== runId) return;
+      const amt = Math.round(rand(80, 560)*100)/100;
+      const sx = orbXs[i%3] + rand(-14,14);
+      const tx = W/2 + rand(-cw*0.22, cw*0.22);
+      flights.push(fly(amt, sx, startY, tx, targetY, () => {
+        balance += amt; tweenTo(balance);
+        card.classList.remove('hit'); void card.offsetWidth; card.classList.add('hit');
+      }));
+      await wait(reduce ? 120 : 470);
+    }
+    await Promise.all(flights);
+    await wait(650);
+    if (id !== runId) return;
+
+    // finale: card to centre + confetti
+    stage.classList.add('done');
+    wrap.classList.add('final');
+    setPos(wrap, topX, (H - ch)/2 - 30, 1.06);
+    await wait(reduce ? 200 : 650);
+    const cx = W/2, cy = (H)/2 - 30;
+    confetti(cx, cy);
+    again.classList.add('show');
+    again.focus({preventScroll:true});
+  }
+
+  function fly(amount, sx, sy, tx, ty, onArrive){
+    return new Promise(res => {
+      const el = document.createElement('div');
+      el.className = 'fly';
+      const t = '+' + fmt(amount);
+      el.textContent = t; el.dataset.t = t;
+      stage.appendChild(el);
+      const w = el.offsetWidth, h = el.offsetHeight;
+      const dur = reduce ? 500 : rand(1500, 1900);
+      const sway = rand(-20, 20);
+      const t0 = performance.now();
+      let lastDot = 0;
+      const step = now => {
+        const k = Math.min(1,(now-t0)/dur);
+        const e = k<.5 ? 2*k*k : 1-Math.pow(-2*k+2,2)/2;
+        const x = sx + (tx-sx)*e + Math.sin(k*Math.PI)*sway;
+        const y = sy + (ty-sy)*e;
+        const s = k < .85 ? 1 : 1 - (k-.85)/.15*0.65;
+        const o = k < .08 ? k/.08 : (k < .88 ? 1 : 1-(k-.88)/.12);
+        el.style.transform = `translate(${x - w/2}px,${y - h/2}px) scale(${s})`;
+        el.style.opacity = o;
+        if (!reduce && now - lastDot > 55 && k < .85){
+          lastDot = now;
+          const d = document.createElement('span');
+          d.className = 'dot';
+          d.style.transform = `translate(${x + rand(-w*.3,w*.3)}px,${y + h*.6}px)`;
+          stage.appendChild(d);
+          d.addEventListener('animationend', () => d.remove());
+        }
+        if (k<1) requestAnimationFrame(step);
+        else { el.remove(); onArrive(); res(); }
+      };
+      requestAnimationFrame(step);
+    });
+  }
+
+  again.addEventListener('click', () => {
+    runId++;
+    again.classList.remove('show');
+    stage.classList.remove('on','done');
+    stage.querySelectorAll('.fly,.dot').forEach(n => n.remove());
+    if (wrap){
+      const w = wrap; wrap = null;
+      w.style.transition = 'opacity .4s, transform .4s';
+      w.style.opacity = '0';
+      setTimeout(() => w.remove(), 420);
+    }
+    list.classList.remove('hide');
+    running = false;
+  });
+
+  /* ---------- confetti ---------- */
+  const cv = document.getElementById('confetti');
+  const ctx = cv.getContext('2d');
+  const COLORS = ['#ffd27a','#ff4fe0','#6ff2ff','#a77bff','#ffffff','#5be3b0','#ff7a6b'];
+  let parts = [], craf = 0;
+
+  function resize(){
+    const dpr = Math.min(devicePixelRatio||1, 2);
+    cv.width = innerWidth*dpr; cv.height = innerHeight*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  addEventListener('resize', resize); resize();
+
+  function piece(x, y, angle, speed){
+    return {
+      x, y,
+      vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+      w: rand(7,13), h: rand(4,8),
+      rot: rand(0,Math.PI*2), vr: rand(-.25,.25),
+      tilt: rand(0,Math.PI*2), vt: rand(.08,.2),
+      color: COLORS[(Math.random()*COLORS.length)|0],
+      round: Math.random() < .25
+    };
+  }
+
+  function confetti(cx, cy){
+    const W = innerWidth, H = innerHeight;
+    const n = reduce ? 60 : 1;
+    // burst from the card
+    for (let i=0;i<(reduce?60:160);i++) parts.push(piece(cx, cy, rand(0,Math.PI*2), rand(4,15)));
+    if (!reduce){
+      // side cannons
+      for (let i=0;i<90;i++){
+        parts.push(piece(0, H*0.9, rand(-Math.PI*0.42,-Math.PI*0.18), rand(12,22)));
+        parts.push(piece(W, H*0.9, rand(-Math.PI*0.82,-Math.PI*0.58), rand(12,22)));
+      }
+      // gentle rain from the top
+      let k = 0;
+      const rain = setInterval(() => {
+        for (let i=0;i<8;i++) parts.push(piece(rand(0,W), -20, Math.PI/2, rand(1,3)));
+        if (++k > 18) clearInterval(rain);
+      }, 90);
+    }
+    if (!craf) craf = requestAnimationFrame(tick);
+  }
+
+  let last = 0;
+  function tick(now){
+    const dt = last ? Math.min(2, (now-last)/16.67) : 1; last = now;
+    const H = innerHeight;
+    ctx.clearRect(0,0,innerWidth,H);
+    parts = parts.filter(p => p.y < H + 40);
+    for (const p of parts){
+      p.vx *= Math.pow(.985, dt); p.vy = p.vy*Math.pow(.985, dt) + .32*dt;
+      if (p.vy > 5.5) p.vy = 5.5;
+      p.x += (p.vx + Math.sin(p.tilt)*.6)*dt; p.y += p.vy*dt;
+      p.rot += p.vr*dt; p.tilt += p.vt*dt;
+      ctx.save();
+      ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      const sx = Math.cos(p.tilt);
+      if (p.round){ ctx.beginPath(); ctx.ellipse(0,0,p.h*.7*Math.abs(sx)+.5,p.h*.7,0,0,Math.PI*2); ctx.fill(); }
+      else ctx.fillRect(-p.w/2*sx, -p.h/2, p.w*sx, p.h);
+      ctx.restore();
+    }
+    if (parts.length) craf = requestAnimationFrame(tick);
+    else { craf = 0; last = 0; ctx.clearRect(0,0,innerWidth,H); }
+  }
+})();
+</script>
+</body>
+</html>
